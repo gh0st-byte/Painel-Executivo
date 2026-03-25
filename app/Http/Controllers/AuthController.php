@@ -2,9 +2,11 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\AdminUser;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Hash;
 use Illuminate\View\View;
 
 class AuthController extends Controller
@@ -25,10 +27,16 @@ class AuthController extends Controller
             'password' => ['required', 'string'],
         ]);
 
-        if (! Auth::attempt([
-            'email_admin' => $credentials['email'],
-            'password' => $credentials['password'],
-        ], $request->boolean('remember'))) {
+        $user = AdminUser::query()
+            ->where('email_admin', $credentials['email'])
+            ->first();
+
+        $passwordMatches = $user && (
+            Hash::check($credentials['password'], $user->password_admin)
+            || hash_equals($user->password_admin, $credentials['password'])
+        );
+
+        if (! $passwordMatches) {
             return back()
                 ->withInput($request->only('email', 'remember'))
                 ->withErrors([
@@ -36,6 +44,13 @@ class AuthController extends Controller
                 ]);
         }
 
+        if ($user && hash_equals($user->password_admin, $credentials['password'])) {
+            $user->forceFill([
+                'password_admin' => Hash::make($credentials['password']),
+            ])->save();
+        }
+
+        Auth::login($user, $request->boolean('remember'));
         $request->session()->regenerate();
 
         return redirect()->intended(route('dashboard.overview'));

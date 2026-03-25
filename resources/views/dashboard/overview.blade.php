@@ -79,20 +79,14 @@
                         </div>
                     </div>
                     <div class="p-5 h-[400px] flex flex-col justify-end relative">
-                        @php
-                            $maxDailyRevenue = max(1, (float) $dailySales->max('receita'));
-                        @endphp
                         <div class="absolute left-5 top-5 bottom-8 flex flex-col justify-between text-xs text-text-muted font-medium w-16">
-                            <span>R$ {{ number_format($maxDailyRevenue, 0, ',', '.') }}</span>
-                            <span>R$ {{ number_format($maxDailyRevenue * 0.66, 0, ',', '.') }}</span>
-                            <span>R$ {{ number_format($maxDailyRevenue * 0.33, 0, ',', '.') }}</span>
+                            <span>R$ {{ number_format($dailySalesChart['maxRevenue'], 0, ',', '.') }}</span>
+                            <span>R$ {{ number_format($dailySalesChart['maxRevenue'] * 0.66, 0, ',', '.') }}</span>
+                            <span>R$ {{ number_format($dailySalesChart['maxRevenue'] * 0.33, 0, ',', '.') }}</span>
                             <span>R$ 0</span>
                         </div>
                         <div class="ml-12 h-full flex items-end justify-between gap-2 grid-bg-lines pb-6 relative">
-                            @forelse ($dailySales as $day)
-                                @php
-                                    $height = max(8, (((float) $day->receita / $maxDailyRevenue) * 100));
-                                @endphp
+                            @forelse ($dailySalesChart['bars'] as $height)
                                 <div class="w-full flex flex-col justify-end h-full">
                                     <div class="w-full rounded-t bg-primary/90" style="height: {{ $height }}%;"></div>
                                 </div>
@@ -103,8 +97,8 @@
                             @endforelse
                         </div>
                         <div class="ml-12 flex justify-between text-xs text-text-muted font-medium mt-2">
-                            @foreach ($dailySales as $day)
-                                <span class="w-full text-center">{{ \Illuminate\Support\Carbon::parse($day->data_venda)->format('d/m') }}</span>
+                            @foreach ($dailySalesChart['labels'] as $label)
+                                <span class="w-full text-center">{{ $label }}</span>
                             @endforeach
                         </div>
                     </div>

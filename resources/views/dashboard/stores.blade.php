@@ -53,30 +53,21 @@
                     <button class="text-text-muted hover:text-text"><span class="material-symbols-outlined text-[18px]">more_vert</span></button>
                 </div>
                 <div class="flex-1 p-4 relative flex items-center justify-center">
-                    @php
-                        $maxDailyRevenue = max(1, (float) $dailySales->max('receita'));
-                        $points = $dailySales->values()->map(function ($day, $index) use ($dailySales, $maxDailyRevenue) {
-                            $x = $dailySales->count() === 1 ? 50 : ($index / max(1, $dailySales->count() - 1)) * 100;
-                            $y = 100 - (((float) $day->receita / $maxDailyRevenue) * 100);
-
-                            return round($x, 2).','.round(max(4, min(96, $y)), 2);
-                        })->implode(' ');
-                    @endphp
                     <div class="absolute inset-x-4 top-4 bottom-8 border-l border-b border-border flex items-end">
                         <div class="absolute -left-16 top-0 bottom-0 flex flex-col justify-between text-[10px] text-text-muted h-full pb-0">
-                            <span>{{ number_format($maxDailyRevenue, 0, ',', '.') }}</span>
-                            <span>{{ number_format($maxDailyRevenue * 0.75, 0, ',', '.') }}</span>
-                            <span>{{ number_format($maxDailyRevenue * 0.5, 0, ',', '.') }}</span>
-                            <span>{{ number_format($maxDailyRevenue * 0.25, 0, ',', '.') }}</span>
+                            <span>{{ number_format($dailySalesChart['maxRevenue'], 0, ',', '.') }}</span>
+                            <span>{{ number_format($dailySalesChart['maxRevenue'] * 0.75, 0, ',', '.') }}</span>
+                            <span>{{ number_format($dailySalesChart['maxRevenue'] * 0.5, 0, ',', '.') }}</span>
+                            <span>{{ number_format($dailySalesChart['maxRevenue'] * 0.25, 0, ',', '.') }}</span>
                             <span>0</span>
                         </div>
                         <svg class="w-full h-full" preserveAspectRatio="none" viewBox="0 0 100 100">
                             <line stroke="#e5e7eb" stroke-dasharray="2,2" stroke-width="0.5" x1="0" x2="100" y1="25" y2="25"></line>
                             <line stroke="#e5e7eb" stroke-dasharray="2,2" stroke-width="0.5" x1="0" x2="100" y1="50" y2="50"></line>
                             <line stroke="#e5e7eb" stroke-dasharray="2,2" stroke-width="0.5" x1="0" x2="100" y1="75" y2="75"></line>
-                            @if ($points !== '')
-                                <polyline fill="none" points="{{ $points }}" stroke="#0f54a3" stroke-width="2" vector-effect="non-scaling-stroke"></polyline>
-                                <polygon fill="url(#blue-grad)" opacity="0.1" points="0,100 {{ $points }} 100,100"></polygon>
+                            @if ($dailySalesChart['points'] !== '')
+                                <polyline fill="none" points="{{ $dailySalesChart['points'] }}" stroke="#0f54a3" stroke-width="2" vector-effect="non-scaling-stroke"></polyline>
+                                <polygon fill="url(#blue-grad)" opacity="0.1" points="0,100 {{ $dailySalesChart['points'] }} 100,100"></polygon>
                             @endif
                             <defs>
                                 <linearGradient id="blue-grad" x1="0%" x2="0%" y1="0%" y2="100%">
@@ -87,8 +78,8 @@
                         </svg>
                     </div>
                     <div class="absolute bottom-2 inset-x-4 flex justify-between text-[10px] text-text-muted">
-                        @foreach ($dailySales as $day)
-                            <span>{{ \Illuminate\Support\Carbon::parse($day->data_venda)->format('d/m') }}</span>
+                        @foreach ($dailySalesChart['labels'] as $label)
+                            <span>{{ $label }}</span>
                         @endforeach
                     </div>
                 </div>
@@ -160,11 +151,7 @@
                             @endforelse
                         </ul>
                     </div>
-                    @php
-                        $first = (float) ($categories[0]->percentual ?? 0);
-                        $second = $first + (float) ($categories[1]->percentual ?? 0);
-                    @endphp
-                    <div class="w-32 h-32 relative rounded-full shrink-0 flex items-center justify-center" style="background: conic-gradient(#0f54a3 0% {{ $first }}%, #d4af37 {{ $first }}% {{ $second }}%, #9ca3af {{ $second }}% 100%);">
+                    <div class="w-32 h-32 relative rounded-full shrink-0 flex items-center justify-center" style="background: conic-gradient(#0f54a3 0% {{ $categoryChart['firstPercent'] }}%, #d4af37 {{ $categoryChart['firstPercent'] }}% {{ $categoryChart['secondPercent'] }}%, #9ca3af {{ $categoryChart['secondPercent'] }}% 100%);">
                         <div class="w-20 h-20 bg-surface rounded-full absolute"></div>
                     </div>
                 </div>
