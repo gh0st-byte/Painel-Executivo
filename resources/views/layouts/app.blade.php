@@ -147,8 +147,8 @@
                         <span class="material-symbols-outlined text-white text-sm">person</span>
                     </div>
                     <div class="flex flex-col">
-                        <span class="text-sm font-bold">{{ auth()->user()->name }}</span>
-                        <span class="text-xs text-white/60">{{ auth()->user()->email }}</span>
+                        <span class="text-sm font-bold">{{ ucfirst(auth()->user()->role) }}</span>
+                        <span class="text-xs text-white/60">{{ auth()->user()->email_admin }}</span>
                     </div>
                 </div>
                 <form action="{{ route('logout') }}" class="mt-3 px-3" method="POST">

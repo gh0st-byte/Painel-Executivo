@@ -25,7 +25,10 @@ class AuthController extends Controller
             'password' => ['required', 'string'],
         ]);
 
-        if (! Auth::attempt($credentials, $request->boolean('remember'))) {
+        if (! Auth::attempt([
+            'email_admin' => $credentials['email'],
+            'password' => $credentials['password'],
+        ], $request->boolean('remember'))) {
             return back()
                 ->withInput($request->only('email', 'remember'))
                 ->withErrors([

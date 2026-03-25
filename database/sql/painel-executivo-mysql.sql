@@ -1,29 +1,20 @@
-CREATE TABLE IF NOT EXISTS users (
-    id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
-    name VARCHAR(255) NOT NULL,
-    email VARCHAR(255) NOT NULL,
-    email_verified_at TIMESTAMP NULL DEFAULT NULL,
-    password VARCHAR(255) NOT NULL,
-    remember_token VARCHAR(100) DEFAULT NULL,
-    created_at TIMESTAMP NULL DEFAULT NULL,
-    updated_at TIMESTAMP NULL DEFAULT NULL,
-    PRIMARY KEY (id),
-    UNIQUE KEY users_email_unique (email)
+CREATE TABLE IF NOT EXISTS users_admin (
+    id INT PRIMARY KEY AUTO_INCREMENT,
+    email_admin VARCHAR(40) UNIQUE NOT NULL,
+    password_admin VARCHAR(255) NOT NULL,
+    role ENUM('admin', 'executive', 'common') NOT NULL,
+    CONSTRAINT chk_password_min CHECK (CHAR_LENGTH(password_admin) >= 12)
 );
 
-INSERT INTO users (name, email, email_verified_at, password, remember_token, created_at, updated_at)
+INSERT INTO users_admin (email_admin, password_admin, role)
 SELECT
-    'Administrador',
     'admin@cruzeiro.com.br',
-    NOW(),
     '$2y$12$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi',
-    NULL,
-    NOW(),
-    NOW()
+    'admin'
 WHERE NOT EXISTS (
     SELECT 1
-    FROM users
-    WHERE email = 'admin@cruzeiro.com.br'
+    FROM users_admin
+    WHERE email_admin = 'admin@cruzeiro.com.br'
 );
 
 CREATE TABLE IF NOT EXISTS fato_loja_fisica (
