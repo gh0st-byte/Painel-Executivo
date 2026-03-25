@@ -23,18 +23,26 @@
 
 @section('content')
     <div class="flex-1 overflow-y-auto p-6">
+        @if (! $analyticsAvailable)
+            <div class="mb-6 rounded border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
+                A consulta às views de lojas não está disponível. Execute o arquivo
+                <code>database/sql/painel-executivo-mysql.sql</code>
+                e valide a conexão do banco configurado no <code>.env</code>.
+            </div>
+        @endif
+
         <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
             <div class="bg-surface p-5 rounded border border-border shadow-sm flex flex-col justify-between">
                 <div class="flex justify-between items-start mb-2"><p class="text-text-muted text-sm font-medium">Receita Lojas</p><span class="material-symbols-outlined text-primary text-[20px]">payments</span></div>
-                <div class="flex items-baseline gap-2"><p class="text-2xl font-bold tracking-tight text-text">R$ 450.000</p><span class="text-xs font-medium text-success bg-green-50 px-1.5 py-0.5 rounded flex items-center"><span class="material-symbols-outlined text-[12px] leading-none">trending_up</span>+5.2%</span></div>
+                <div class="flex items-baseline gap-2"><p class="text-2xl font-bold tracking-tight text-text">{{ $kpis ? 'R$ '.number_format((float) $kpis->receita_total, 2, ',', '.') : 'R$ 0,00' }}</p><span class="text-xs font-medium text-success bg-green-50 px-1.5 py-0.5 rounded flex items-center"><span class="material-symbols-outlined text-[12px] leading-none">database</span>base atual</span></div>
             </div>
             <div class="bg-surface p-5 rounded border border-border shadow-sm flex flex-col justify-between">
                 <div class="flex justify-between items-start mb-2"><p class="text-text-muted text-sm font-medium">Ticket Médio</p><span class="material-symbols-outlined text-primary text-[20px]">receipt_long</span></div>
-                <div class="flex items-baseline gap-2"><p class="text-2xl font-bold tracking-tight text-text">R$ 285</p><span class="text-xs font-medium text-alert bg-red-50 px-1.5 py-0.5 rounded flex items-center"><span class="material-symbols-outlined text-[12px] leading-none">trending_down</span>-1.1%</span></div>
+                <div class="flex items-baseline gap-2"><p class="text-2xl font-bold tracking-tight text-text">{{ $kpis ? 'R$ '.number_format((float) $kpis->ticket_medio, 2, ',', '.') : 'R$ 0,00' }}</p><span class="text-xs font-medium text-primary bg-primary/10 px-1.5 py-0.5 rounded flex items-center"><span class="material-symbols-outlined text-[12px] leading-none">local_mall</span>por item</span></div>
             </div>
             <div class="bg-surface p-5 rounded border border-border shadow-sm flex flex-col justify-between">
-                <div class="flex justify-between items-start mb-2"><p class="text-text-muted text-sm font-medium">Total Pedidos</p><span class="material-symbols-outlined text-primary text-[20px]">shopping_bag</span></div>
-                <div class="flex items-baseline gap-2"><p class="text-2xl font-bold tracking-tight text-text">1.578</p><span class="text-xs font-medium text-success bg-green-50 px-1.5 py-0.5 rounded flex items-center"><span class="material-symbols-outlined text-[12px] leading-none">trending_up</span>+3.4%</span></div>
+                <div class="flex justify-between items-start mb-2"><p class="text-text-muted text-sm font-medium">Itens Vendidos</p><span class="material-symbols-outlined text-primary text-[20px]">shopping_bag</span></div>
+                <div class="flex items-baseline gap-2"><p class="text-2xl font-bold tracking-tight text-text">{{ $kpis ? number_format((float) $kpis->itens_vendidos, 0, ',', '.') : '0' }}</p><span class="text-xs font-medium text-success bg-green-50 px-1.5 py-0.5 rounded flex items-center"><span class="material-symbols-outlined text-[12px] leading-none">inventory_2</span>unidades</span></div>
             </div>
         </div>
 
@@ -45,16 +53,31 @@
                     <button class="text-text-muted hover:text-text"><span class="material-symbols-outlined text-[18px]">more_vert</span></button>
                 </div>
                 <div class="flex-1 p-4 relative flex items-center justify-center">
+                    @php
+                        $maxDailyRevenue = max(1, (float) $dailySales->max('receita'));
+                        $points = $dailySales->values()->map(function ($day, $index) use ($dailySales, $maxDailyRevenue) {
+                            $x = $dailySales->count() === 1 ? 50 : ($index / max(1, $dailySales->count() - 1)) * 100;
+                            $y = 100 - (((float) $day->receita / $maxDailyRevenue) * 100);
+
+                            return round($x, 2).','.round(max(4, min(96, $y)), 2);
+                        })->implode(' ');
+                    @endphp
                     <div class="absolute inset-x-4 top-4 bottom-8 border-l border-b border-border flex items-end">
-                        <div class="absolute -left-12 top-0 bottom-0 flex flex-col justify-between text-[10px] text-text-muted h-full pb-0">
-                            <span>80k</span><span>60k</span><span>40k</span><span>20k</span><span>0</span>
+                        <div class="absolute -left-16 top-0 bottom-0 flex flex-col justify-between text-[10px] text-text-muted h-full pb-0">
+                            <span>{{ number_format($maxDailyRevenue, 0, ',', '.') }}</span>
+                            <span>{{ number_format($maxDailyRevenue * 0.75, 0, ',', '.') }}</span>
+                            <span>{{ number_format($maxDailyRevenue * 0.5, 0, ',', '.') }}</span>
+                            <span>{{ number_format($maxDailyRevenue * 0.25, 0, ',', '.') }}</span>
+                            <span>0</span>
                         </div>
                         <svg class="w-full h-full" preserveAspectRatio="none" viewBox="0 0 100 100">
                             <line stroke="#e5e7eb" stroke-dasharray="2,2" stroke-width="0.5" x1="0" x2="100" y1="25" y2="25"></line>
                             <line stroke="#e5e7eb" stroke-dasharray="2,2" stroke-width="0.5" x1="0" x2="100" y1="50" y2="50"></line>
                             <line stroke="#e5e7eb" stroke-dasharray="2,2" stroke-width="0.5" x1="0" x2="100" y1="75" y2="75"></line>
-                            <polyline fill="none" points="0,80 15,65 30,70 45,40 60,50 75,20 90,30 100,10" stroke="#0f54a3" stroke-width="2" vector-effect="non-scaling-stroke"></polyline>
-                            <polygon fill="url(#blue-grad)" opacity="0.1" points="0,100 0,80 15,65 30,70 45,40 60,50 75,20 90,30 100,10 100,100"></polygon>
+                            @if ($points !== '')
+                                <polyline fill="none" points="{{ $points }}" stroke="#0f54a3" stroke-width="2" vector-effect="non-scaling-stroke"></polyline>
+                                <polygon fill="url(#blue-grad)" opacity="0.1" points="0,100 {{ $points }} 100,100"></polygon>
+                            @endif
                             <defs>
                                 <linearGradient id="blue-grad" x1="0%" x2="0%" y1="0%" y2="100%">
                                     <stop offset="0%" stop-color="#0f54a3"></stop>
@@ -64,7 +87,9 @@
                         </svg>
                     </div>
                     <div class="absolute bottom-2 inset-x-4 flex justify-between text-[10px] text-text-muted">
-                        <span>Seg</span><span>Ter</span><span>Qua</span><span>Qui</span><span>Sex</span><span>Sáb</span><span>Dom</span>
+                        @foreach ($dailySales as $day)
+                            <span>{{ \Illuminate\Support\Carbon::parse($day->data_venda)->format('d/m') }}</span>
+                        @endforeach
                     </div>
                 </div>
             </div>
@@ -80,23 +105,38 @@
                             <thead>
                                 <tr class="bg-background text-[11px] uppercase tracking-wider text-text-muted border-b border-border">
                                     <th class="px-4 py-3 font-medium">Produto</th>
-                                    <th class="px-4 py-3 font-medium text-right">Estoque</th>
-                                    <th class="px-4 py-3 font-medium text-right">Vendas</th>
+                                    <th class="px-4 py-3 font-medium text-right">Quantidade</th>
+                                    <th class="px-4 py-3 font-medium text-right">Preço Médio</th>
                                     <th class="px-4 py-3 font-medium text-right">Receita</th>
                                 </tr>
                             </thead>
                             <tbody class="text-sm">
-                                <tr class="bg-white border-b border-border hover:bg-gray-50 cursor-pointer">
-                                    <td class="px-4 py-3 font-medium text-text flex items-center gap-2"><span class="material-symbols-outlined text-[16px] text-text-muted rotate-90">chevron_right</span>Camisa Oficial I 2024</td>
-                                    <td class="px-4 py-3 text-right">450</td><td class="px-4 py-3 text-right">892</td><td class="px-4 py-3 text-right font-medium">R$ 312.110</td>
-                                </tr>
-                                <tr class="bg-gray-50 border-b border-border">
-                                    <td class="px-4 py-3" colspan="4"><div class="h-20 w-full flex items-center justify-center border border-dashed border-gray-300 rounded bg-white"><span class="text-xs text-text-muted flex items-center gap-1"><span class="material-symbols-outlined text-[14px]">show_chart</span>Gráfico de tendência histórico expandido</span></div></td>
-                                </tr>
-                                <tr class="bg-background border-b border-border hover:bg-gray-50 cursor-pointer"><td class="px-4 py-3 font-medium text-text flex items-center gap-2"><span class="material-symbols-outlined text-[16px] text-text-muted">chevron_right</span>Camisa Oficial II 2024</td><td class="px-4 py-3 text-right">120</td><td class="px-4 py-3 text-right">430</td><td class="px-4 py-3 text-right font-medium">R$ 150.450</td></tr>
-                                <tr class="bg-white border-b border-border hover:bg-gray-50 cursor-pointer"><td class="px-4 py-3 font-medium text-text flex items-center gap-2"><span class="material-symbols-outlined text-[16px] text-text-muted">chevron_right</span>Blusa Moletom Viagem</td><td class="px-4 py-3 text-right"><span class="bg-red-100 text-alert px-2 py-0.5 rounded text-xs font-bold border border-red-200">0</span></td><td class="px-4 py-3 text-right">215</td><td class="px-4 py-3 text-right font-medium">R$ 64.285</td></tr>
-                                <tr class="bg-background border-b border-border hover:bg-gray-50 cursor-pointer"><td class="px-4 py-3 font-medium text-text flex items-center gap-2"><span class="material-symbols-outlined text-[16px] text-text-muted">chevron_right</span>Boné Aba Reta Azul</td><td class="px-4 py-3 text-right">85</td><td class="px-4 py-3 text-right">190</td><td class="px-4 py-3 text-right font-medium">R$ 18.810</td></tr>
-                                <tr class="bg-white hover:bg-gray-50 cursor-pointer"><td class="px-4 py-3 font-medium text-text flex items-center gap-2"><span class="material-symbols-outlined text-[16px] text-text-muted">chevron_right</span>Copo Térmico Escudo</td><td class="px-4 py-3 text-right text-orange-600 font-medium">12</td><td class="px-4 py-3 text-right">150</td><td class="px-4 py-3 text-right font-medium">R$ 14.850</td></tr>
+                                @forelse ($topProducts as $index => $product)
+                                    <tr class="{{ $index % 2 === 0 ? 'bg-white' : 'bg-background' }} border-b border-border hover:bg-gray-50 cursor-pointer">
+                                        <td class="px-4 py-3 font-medium text-text">
+                                            <div class="flex items-center gap-3">
+                                                @if (! empty($product->imagem_url))
+                                                    <img alt="{{ $product->produto }}" class="h-10 w-10 rounded object-cover" src="{{ $product->imagem_url }}" />
+                                                @else
+                                                    <div class="flex h-10 w-10 items-center justify-center rounded bg-background text-text-muted">
+                                                        <span class="material-symbols-outlined text-[16px]">image</span>
+                                                    </div>
+                                                @endif
+                                                <div>
+                                                    <div>{{ $product->produto }}</div>
+                                                    <div class="text-xs font-medium text-text-muted">{{ $product->categoria ?: 'Sem categoria' }}</div>
+                                                </div>
+                                            </div>
+                                        </td>
+                                        <td class="px-4 py-3 text-right">{{ number_format((float) $product->quantidade, 0, ',', '.') }}</td>
+                                        <td class="px-4 py-3 text-right">R$ {{ number_format((float) $product->preco_medio, 2, ',', '.') }}</td>
+                                        <td class="px-4 py-3 text-right font-medium">R$ {{ number_format((float) $product->receita, 2, ',', '.') }}</td>
+                                    </tr>
+                                @empty
+                                    <tr class="bg-white">
+                                        <td class="px-4 py-6 text-center text-text-muted" colspan="4">Nenhum produto disponível.</td>
+                                    </tr>
+                                @endforelse
                             </tbody>
                         </table>
                     </div>
@@ -106,12 +146,25 @@
                     <div class="flex-1">
                         <h3 class="text-sm font-bold text-text mb-4">Distribuição por Categoria</h3>
                         <ul class="space-y-3">
-                            <li class="flex items-center justify-between text-sm"><div class="flex items-center gap-2"><div class="w-3 h-3 rounded-sm bg-primary"></div><span>Camisas</span></div><span class="font-medium">65%</span></li>
-                            <li class="flex items-center justify-between text-sm"><div class="flex items-center gap-2"><div class="w-3 h-3 rounded-sm bg-accent"></div><span>Linha Casual</span></div><span class="font-medium">25%</span></li>
-                            <li class="flex items-center justify-between text-sm"><div class="flex items-center gap-2"><div class="w-3 h-3 rounded-sm bg-gray-400"></div><span>Acessórios</span></div><span class="font-medium">10%</span></li>
+                            @php($colors = ['bg-primary', 'bg-accent', 'bg-gray-400'])
+                            @forelse ($categories as $index => $category)
+                                <li class="flex items-center justify-between text-sm">
+                                    <div class="flex items-center gap-2">
+                                        <div class="w-3 h-3 rounded-sm {{ $colors[$index] ?? 'bg-gray-400' }}"></div>
+                                        <span>{{ $category->categoria ?: 'Sem categoria' }}</span>
+                                    </div>
+                                    <span class="font-medium">{{ number_format((float) $category->percentual, 1, ',', '.') }}%</span>
+                                </li>
+                            @empty
+                                <li class="text-sm text-text-muted">Sem categorias calculadas.</li>
+                            @endforelse
                         </ul>
                     </div>
-                    <div class="w-32 h-32 relative rounded-full shrink-0 flex items-center justify-center" style="background: conic-gradient(#0f54a3 0% 65%, #d4af37 65% 90%, #9ca3af 90% 100%);">
+                    @php
+                        $first = (float) ($categories[0]->percentual ?? 0);
+                        $second = $first + (float) ($categories[1]->percentual ?? 0);
+                    @endphp
+                    <div class="w-32 h-32 relative rounded-full shrink-0 flex items-center justify-center" style="background: conic-gradient(#0f54a3 0% {{ $first }}%, #d4af37 {{ $first }}% {{ $second }}%, #9ca3af {{ $second }}% 100%);">
                         <div class="w-20 h-20 bg-surface rounded-full absolute"></div>
                     </div>
                 </div>
